@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/quote_bloc.dart';
 
 class QuotePage extends StatefulWidget {
@@ -54,9 +55,8 @@ class _QuotePageState extends State<QuotePage> {
           ),
         ),
         child: Center(
-          child: Consumer<QuoteBloc>(
-            builder: (context, bloc, _) {
-              final state = bloc.state;
+          child: BlocBuilder<QuoteBloc, QuoteState>(
+            builder: (context, state) {
               if (state is QuoteLoading) {
                 return const CircularProgressIndicator(color: Colors.white);
               } else if (state is QuoteLoaded) {
@@ -70,7 +70,7 @@ class _QuotePageState extends State<QuotePage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: Colors.white.withOpacity(0.95),
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Column(
