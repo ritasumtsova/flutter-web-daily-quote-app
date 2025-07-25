@@ -16,13 +16,33 @@ class QuoteRepositoryImpl implements QuoteRepository {
 
   @override
   Future<Quote> getQuoteOfTheDay() async {
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final cached = await localDataSource.getCachedQuote(today);
-    if (cached != null) {
-      return cached;
-    }
+    // final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    // final cached = await localDataSource.getCachedQuote(today);
+    // if (cached != null) {
+    //   return cached;
+    // }
     final remote = await remoteDataSource.getRandomQuote();
-    await localDataSource.cacheQuote(today, remote);
+    // await localDataSource.cacheQuote(today, remote);
     return remote;
+  }
+
+  // Favorites
+  @override
+  Future<List<Quote>> getFavoriteQuotes() async {
+    return await localDataSource.getFavoriteQuotes();
+  }
+
+  @override
+  Future<void> addFavoriteQuote(Quote quote) async {
+    await localDataSource.addFavoriteQuote(
+      QuoteModel(text: quote.text, author: quote.author),
+    );
+  }
+
+  @override
+  Future<void> removeFavoriteQuote(Quote quote) async {
+    await localDataSource.removeFavoriteQuote(
+      QuoteModel(text: quote.text, author: quote.author),
+    );
   }
 }
