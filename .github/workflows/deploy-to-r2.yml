@@ -21,13 +21,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Create assets/.env file
-        run: |
-          mkdir -p assets
-          echo "API_NINJAS_KEY=${{ secrets.API_NINJAS_KEY }}" > assets/.env
-
       - name: Build web
-        run: flutter build web --release
+        run: flutter build web --release --dart-define=API_NINJAS_KEY=${{ secrets.API_NINJAS_KEY }}
 
       - name: Sync to Cloudflare R2
         env:
