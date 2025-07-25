@@ -24,6 +24,14 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
+      - name: Insert _routes.json
+        run: |
+          echo '{
+            "version": 1,
+            "include": ["/*"],
+            "fallback": "index.html"
+          }' > build/web/_routes.json
+
       - name: Sync to Cloudflare R2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
