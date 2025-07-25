@@ -18,9 +18,9 @@ class QuoteRepositoryImpl implements QuoteRepository {
   Future<Quote> getQuoteOfTheDay() async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final cached = await localDataSource.getCachedQuote(today);
-    // if (cached != null) {
-    //   return cached;
-    // }
+    if (cached != null) {
+      return cached;
+    }
     final remote = await remoteDataSource.getRandomQuote();
     await localDataSource.cacheQuote(today, remote);
     return remote;

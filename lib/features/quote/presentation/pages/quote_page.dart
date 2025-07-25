@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import '../bloc/quote_bloc.dart';
 
 class QuotePage extends StatefulWidget {
@@ -70,7 +71,7 @@ class _QuotePageState extends State<QuotePage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: .95),
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Column(
@@ -103,6 +104,23 @@ class _QuotePageState extends State<QuotePage> {
                                   color: Colors.grey[700],
                                 ),
                             textAlign: TextAlign.center,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.ios_share,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                tooltip: 'Share Quote',
+                                onPressed: () {
+                                  final text =
+                                      '"${state.quote.text}"\n- ${state.quote.author}';
+                                  Share.share(text);
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
