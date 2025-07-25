@@ -1,0 +1,39 @@
+name: Deploy Flutter Web to Cloudflare R2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Sync to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_BUCKET: ${{ vars.BUCKET_NAME }}
+          R2_ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}
+        run: |
+          pip install awscli
+          aws configure set default.s3.signature_version s3v4
+          aws s3 sync build/web/ s3://$R2_BUCKET/ \
+            --endpoint-url=https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com \
+            --delete 
