@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../../features/favorites/presentation/bloc/favorites_bloc.dart';
+import '../../../../../features/favorites/domain/entities/favorite_quote.dart';
 import '../bloc/quote_bloc.dart';
 
 class QuotePage extends StatefulWidget {
@@ -15,128 +17,149 @@ class _QuotePageState extends State<QuotePage> {
   @override
   void initState() {
     super.initState();
-    // Auto-load quote on page load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<QuoteBloc>(context, listen: false).add(GetQuoteEvent());
+      Provider.of<FavoritesBloc>(
+        context,
+        listen: false,
+      ).add(LoadFavoritesEvent());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final bloc = Provider.of<QuoteBloc>(context, listen: false);
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Quote of the Day',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
-            tooltip: 'New Quote',
-            onPressed: () => bloc.add(GetQuoteEvent()),
-          ),
-        ],
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-          ),
-        ),
-        child: Center(
-          child: BlocBuilder<QuoteBloc, QuoteState>(
-            builder: (context, state) {
-              if (state is QuoteLoading) {
-                return const CircularProgressIndicator(color: Colors.white);
-              } else if (state is QuoteLoaded) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 32.0,
-                  ),
-                  child: Card(
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.grey[100], // Flat, light background
+      child: Center(
+        child: BlocBuilder<QuoteBloc, QuoteState>(
+          builder: (context, quoteState) {
+            if (quoteState is QuoteLoading) {
+              return const CircularProgressIndicator();
+            } else if (quoteState is QuoteLoaded) {
+              return BlocBuilder<FavoritesBloc, FavoritesState>(
+                builder: (context, favState) {
+                  final isFavorite =
+                      favState is FavoritesLoaded &&
+                      favState.favorites.any(
+                        (q) =>
+                            q.text == quoteState.quote.text &&
+                            q.author == quoteState.quote.author,
+                      );
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 24.0,
                     ),
-                    color: Colors.white.withValues(alpha: .95),
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.format_quote,
-                            size: 48,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            state.quote.text,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                    child: Card(
+                      elevation: 0, // Flat card
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.format_quote,
+                              size: 40,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              quoteState.quote.text,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              quoteState.quote.author.isNotEmpty
+                                  ? '- ${quoteState.quote.author}'
+                                  : '',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey[700],
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: Colors.red,
+                                  ),
+                                  tooltip: isFavorite
+                                      ? 'Remove from Favorites'
+                                      : 'Add to Favorites',
+                                  onPressed: () {
+                                    final favBloc = context
+                                        .read<FavoritesBloc>();
+                                    final favQuote = FavoriteQuote(
+                                      text: quoteState.quote.text,
+                                      author: quoteState.quote.author,
+                                    );
+                                    if (isFavorite) {
+                                      favBloc.add(
+                                        RemoveFavoriteEvent(favQuote),
+                                      );
+                                    } else {
+                                      favBloc.add(AddFavoriteEvent(favQuote));
+                                    }
+                                  },
                                 ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 32),
-                          Text(
-                            state.quote.author.isNotEmpty
-                                ? '- ${state.quote.author}'
-                                : '',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.grey[700],
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.ios_share,
+                                    color: Colors.grey,
+                                  ),
+                                  tooltip: 'Share Quote',
+                                  onPressed: () {
+                                    final text =
+                                        '"${quoteState.quote.text}"\n- ${quoteState.quote.author}';
+                                    Share.share(text);
+                                  },
                                 ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  Icons.ios_share,
-                                  color: Theme.of(context).colorScheme.primary,
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.refresh,
+                                    color: Colors.grey,
+                                  ),
+                                  tooltip: 'New Quote',
+                                  onPressed: () => context
+                                      .read<QuoteBloc>()
+                                      .add(GetQuoteEvent()),
                                 ),
-                                tooltip: 'Share Quote',
-                                onPressed: () {
-                                  final text =
-                                      '"${state.quote.text}"\n- ${state.quote.author}';
-                                  Share.share(text);
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              } else if (state is QuoteError) {
-                return Text(
-                  state.message,
-                  style: const TextStyle(color: Colors.red),
-                );
-              }
-              // Initial state
-              return const SizedBox.shrink();
-            },
-          ),
+                  );
+                },
+              );
+            } else if (quoteState is QuoteError) {
+              return Text(
+                quoteState.message,
+                style: const TextStyle(color: Colors.red),
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
       ),
     );
