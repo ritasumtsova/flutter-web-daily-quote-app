@@ -26,140 +26,257 @@ class _QuotePageState extends State<QuotePage> {
     });
   }
 
+  void _showAddCustomQuoteSheet() {
+    final textController = TextEditingController();
+    final authorController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 32,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add Custom Quote',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: textController,
+                decoration: const InputDecoration(labelText: 'Quote'),
+                maxLines: 2,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: authorController,
+                decoration: const InputDecoration(
+                  labelText: 'Author (optional)',
+                ),
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      final text = textController.text.trim();
+                      final author = authorController.text.trim();
+                      if (text.isNotEmpty) {
+                        context.read<FavoritesBloc>().add(
+                          AddFavoriteEvent(
+                            FavoriteQuote(text: text, author: author),
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Quote added successfully!'),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF283593),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Add'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.grey[100], // Flat, light background
-      child: Center(
-        child: BlocBuilder<QuoteBloc, QuoteState>(
-          builder: (context, quoteState) {
-            if (quoteState is QuoteLoading) {
-              return const CircularProgressIndicator();
-            } else if (quoteState is QuoteLoaded) {
-              return BlocBuilder<FavoritesBloc, FavoritesState>(
-                builder: (context, favState) {
-                  final isFavorite =
-                      favState is FavoritesLoaded &&
-                      favState.favorites.any(
-                        (q) =>
-                            q.text == quoteState.quote.text &&
-                            q.author == quoteState.quote.author,
-                      );
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 24.0,
-                    ),
-                    child: Card(
-                      elevation: 0, // Flat card
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.format_quote,
-                              size: 40,
-                              color: Colors.grey[600],
+      color: Colors.grey[100],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BlocBuilder<QuoteBloc, QuoteState>(
+                builder: (context, quoteState) {
+                  if (quoteState is QuoteLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (quoteState is QuoteLoaded) {
+                    return BlocBuilder<FavoritesBloc, FavoritesState>(
+                      builder: (context, favState) {
+                        final isFavorite =
+                            favState is FavoritesLoaded &&
+                            favState.favorites.any(
+                              (q) =>
+                                  q.text == quoteState.quote.text &&
+                                  q.author == quoteState.quote.author,
+                            );
+                        return Card(
+                          elevation: 0,
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(
+                              color: Color(0xFF283593),
+                              width: 1.5,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              quoteState.quote.text,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
-                                  ),
-                              textAlign: TextAlign.center,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 18,
+                              horizontal: 18,
                             ),
-                            const SizedBox(height: 24),
-                            Text(
-                              quoteState.quote.author.isNotEmpty
-                                  ? '- ${quoteState.quote.author}'
-                                  : '',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.grey[700],
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  icon: Icon(
-                                    isFavorite
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: Colors.red,
+                                const Text(
+                                  'Get your daily inspiration',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF283593),
                                   ),
-                                  tooltip: isFavorite
-                                      ? 'Remove from Favorites'
-                                      : 'Add to Favorites',
-                                  onPressed: () {
-                                    final favBloc = context
-                                        .read<FavoritesBloc>();
-                                    final favQuote = FavoriteQuote(
-                                      text: quoteState.quote.text,
-                                      author: quoteState.quote.author,
-                                    );
-                                    if (isFavorite) {
-                                      favBloc.add(
-                                        RemoveFavoriteEvent(favQuote),
-                                      );
-                                    } else {
-                                      favBloc.add(AddFavoriteEvent(favQuote));
-                                    }
-                                  },
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.ios_share,
-                                    color: Colors.grey,
+                                const SizedBox(height: 10),
+                                Text(
+                                  quoteState.quote.text,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  tooltip: 'Share Quote',
-                                  onPressed: () {
-                                    final text =
-                                        '"${quoteState.quote.text}"\n- ${quoteState.quote.author}';
-                                    Share.share(text);
-                                  },
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.refresh,
-                                    color: Colors.grey,
-                                  ),
-                                  tooltip: 'New Quote',
-                                  onPressed: () => context
-                                      .read<QuoteBloc>()
-                                      .add(GetQuoteEvent()),
+                                const SizedBox(height: 10),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        quoteState.quote.author.isNotEmpty
+                                            ? '- ${quoteState.quote.author}'
+                                            : '',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        isFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: Colors.red,
+                                      ),
+                                      tooltip: isFavorite
+                                          ? 'Remove from Favorites'
+                                          : 'Add to Favorites',
+                                      onPressed: () {
+                                        final favBloc = context
+                                            .read<FavoritesBloc>();
+                                        final favQuote = FavoriteQuote(
+                                          text: quoteState.quote.text,
+                                          author: quoteState.quote.author,
+                                        );
+                                        if (isFavorite) {
+                                          favBloc.add(
+                                            RemoveFavoriteEvent(favQuote),
+                                          );
+                                        } else {
+                                          favBloc.add(
+                                            AddFavoriteEvent(favQuote),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.ios_share,
+                                        color: Colors.grey,
+                                      ),
+                                      tooltip: 'Share Quote',
+                                      onPressed: () {
+                                        final text =
+                                            '"${quoteState.quote.text}"\n- ${quoteState.quote.author}';
+                                        Share.share(text);
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
+                          ),
+                        );
+                      },
+                    );
+                  } else if (quoteState is QuoteError) {
+                    return Text(
+                      quoteState.message,
+                      style: const TextStyle(color: Colors.red),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
-              );
-            } else if (quoteState is QuoteError) {
-              return Text(
-                quoteState.message,
-                style: const TextStyle(color: Colors.red),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+              ),
+              const SizedBox(height: 28),
+              ElevatedButton.icon(
+                onPressed: _showAddCustomQuoteSheet,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Custom Quote'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF283593),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Center(
+                child: Text(
+                  'Your custom quotes will appear in Favorites!',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

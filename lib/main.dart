@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'features/quote/di/quote_di.dart';
 import 'features/favorites/di/favorites_di.dart';
 import 'features/quote/presentation/pages/quote_page.dart';
 import 'features/favorites/presentation/pages/favorites_page.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load();
   runApp(
     MultiProvider(
       providers: [...quoteProviders, ...favoritesProviders],

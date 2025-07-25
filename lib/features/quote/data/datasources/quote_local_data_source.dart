@@ -4,7 +4,7 @@ import 'dart:convert';
 
 abstract class QuoteLocalDataSource {
   Future<QuoteModel?> getCachedQuote(String today);
-  Future<void> cacheQuote(String today, QuoteModel quote);
+  Future<void> saveQuote(QuoteModel quote, String today);
   // Favorites
   Future<List<QuoteModel>> getFavoriteQuotes();
   Future<void> addFavoriteQuote(QuoteModel quote);
@@ -30,7 +30,7 @@ class QuoteLocalDataSourceImpl implements QuoteLocalDataSource {
   }
 
   @override
-  Future<void> cacheQuote(String today, QuoteModel quote) async {
+  Future<void> saveQuote(QuoteModel quote, String today) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(dateKey, today);
     await prefs.setString(quoteKey, quote.text);

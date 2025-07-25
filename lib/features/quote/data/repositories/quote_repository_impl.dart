@@ -14,7 +14,17 @@ class QuoteRepositoryImpl implements QuoteRepository {
 
   @override
   Future<Quote> getQuoteOfTheDay() async {
-    final quote = await remoteDataSource.getRandomQuote();
-    return quote;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final cached = await localDataSource.getCachedQuote(today);
+    if (cached != null) {
+      return cached;
+    }
+    try {
+      final quote = await remoteDataSource.getRandomQuote();
+      await localDataSource.saveQuote(quote, today);
+      return quote;
+    } catch (e) {
+      throw Exception('Failed to fetch quote: $e');
+    }
   }
 }

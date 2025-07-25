@@ -21,16 +21,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Create .env file
+        run: echo "API_NINJAS_KEY=${{ secrets.API_NINJAS_KEY }}" > .env
+
       - name: Build web
         run: flutter build web --release
-
-      - name: Insert _routes.json
-        run: |
-          echo '{
-            "version": 1,
-            "include": ["/*"],
-            "fallback": "index.html"
-          }' > build/web/_routes.json
 
       - name: Sync to Cloudflare R2
         env:
